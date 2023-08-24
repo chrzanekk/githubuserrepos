@@ -1,8 +1,13 @@
 package pl.konradchrzanowski.githubuserrepos.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -19,6 +24,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GitHubApiServiceImpl implements GitHubApiService {
@@ -27,6 +33,8 @@ public class GitHubApiServiceImpl implements GitHubApiService {
 
     private static final String REPOS = "/repos";
     private static final String BRANCHES = "/branches";
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${github.api.baseUrl}")
     private String baseUrl;
@@ -41,7 +49,7 @@ public class GitHubApiServiceImpl implements GitHubApiService {
     public ConsumerResponse getGithubRepo(String username) {
         log.debug("Request to get list of github repositories of: {} ", username);
         //todo 1. pobrać z api listę repo wg usera odfiltrowaną fork = false;
-        List<GitHubRepoDTO> listOfReposDTO = getListOfGitHubDTOS(getListOfUserRepos(username));
+        List<GitHubRepoDTO> listOfReposDTO = getListOfUserRepos(username);
         List<GitHubRepoDTO> filteredReposDTOS = findNoForkRepos(listOfReposDTO);
         //todo 2. pobrać z api listę branchy (zbudować uri do pobrania branchy - potrzebna będzie lista nazw
         // repozytoriów)
@@ -53,58 +61,48 @@ public class GitHubApiServiceImpl implements GitHubApiService {
 
     private Map<String, List<BranchDTO>> getMapOfBranchesFromUserRepos(List<GitHubRepoDTO> filteredReposDTOS,
                                                                        String userName) {
-        Map<String, List<BranchDTO>> result = new HashMap<>();
-        filteredReposDTOS.forEach(filteredReposDTO -> {
-            List<BranchDTO> listOfBranches = get(URI.create(uriCreatorForUserGitRepoBranches(userName,
-                    filteredReposDTO.name())), BranchDTO.class);
-            result.put(filteredReposDTO.name(), listOfBranches);
-        });
-        return result;
+//        Map<String, List<BranchDTO>> result = new HashMap<>();
+//        filteredReposDTOS.forEach(filteredReposDTO -> {
+//            List<BranchDTO> listOfBranches = get(URI.create(uriCreatorForUserGitRepoBranches(userName,
+//                    filteredReposDTO.getName())), BranchDTO.class);
+//            result.put(filteredReposDTO.getName(), listOfBranches);
+//        });
+//        return result;
+        return null;
     }
 
     private List<GitHubRepoDTO> findNoForkRepos(List<GitHubRepoDTO> listOfReposDTO) {
-        return listOfReposDTO.stream().filter(gitHubRepoDTO -> !gitHubRepoDTO.fork()).toList();
+        return listOfReposDTO.stream().filter(gitHubRepoDTO -> !gitHubRepoDTO.isFork()).toList();
     }
 
-    private List<GitHubReposApiResponse> getListOfUserRepos(String userName) {
-        final GitHubReposApiResponse[] gitHubRepos = getUserRepos(userName);
-        List<GitHubReposApiResponse> gitHubReposApiResponsesList =
-                get(URI.create(uriCreatorForUserGitHubRepos(userName)),
-                        GitHubReposApiResponse.class);
-        if (gitHubRepos == null) {
-            return Collections.emptyList();
-        } else {
-            return Arrays.stream(gitHubRepos).toList();
-        }
+    private List<GitHubRepoDTO> getListOfUserRepos(String userName) {
+        final Object[] gitHubRepos = getUserRepos(userName);
+        List<GitHubRepoDTO> repos = mapObjectsFromApi(gitHubRepos);
+        List<GitHubRepoDTO> mappedRepos = mapLoginFromOwner(repos);
+        return Objects.requireNonNullElse(repos, Collections.emptyList());
     }
 
-    private List<GitHubRepoDTO> getListOfGitHubDTOS(List<GitHubReposApiResponse> reposResponses) {
-        GitHubReposApiResponse first = reposResponses.stream().findFirst()
-                .orElseThrow(() -> new ReposNotFoundException("Repos" +
-                        " not found"));
-        return first.getRepos();
+    private List<GitHubRepoDTO> mapLoginFromOwner(List<GitHubRepoDTO> repos) {
+        return null;
     }
 
-    private GitHubReposApiResponse[] getUserRepos(String userName) {
+    private List<GitHubRepoDTO> mapObjectsFromApi(Object[] gitHubRepos) {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return Arrays.stream(gitHubRepos).map(object -> objectMapper.convertValue(object, GitHubRepoDTO.class))
+                .collect(Collectors.toList());
+    }
+
+
+    private Object[] getUserRepos(String userName) {
         return webClient.get()
                 .uri(uriCreatorForUserGitHubRepos(userName))
+                .accept(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, this::handleError)
-                .bodyToMono(GitHubReposApiResponse[].class)
+                .bodyToMono(Object[].class)
                 .block();
     }
-
-
-    private <T> List<T> get(URI uri, Class<T> responseType) {
-        return webClient.get().uri(uri)
-                .header("Accept: application/json")
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, this::handleError)
-                .bodyToFlux(responseType)
-                .collectList().block();
-    }
-
 
     private String uriCreatorForUserGitHubRepos(String userName) {
         return baseUrl + "/" + userName + REPOS;
