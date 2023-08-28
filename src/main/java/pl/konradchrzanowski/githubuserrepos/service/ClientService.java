@@ -5,5 +5,5 @@ import pl.konradchrzanowski.githubuserrepos.payload.ConsumerResponse;
 
 public interface ClientService {
 
-    ConsumerResponse getUserRepositories(String userName) throws JsonProcessingException;
+    ConsumerResponse getUserRepositories(String userName) ;
 }

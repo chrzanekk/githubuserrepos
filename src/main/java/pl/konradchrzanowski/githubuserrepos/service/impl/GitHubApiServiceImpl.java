@@ -2,27 +2,24 @@ package pl.konradchrzanowski.githubuserrepos.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import pl.konradchrzanowski.githubuserrepos.exception.ReposNotFoundException;
 import pl.konradchrzanowski.githubuserrepos.exception.UserNotFoundException;
 import pl.konradchrzanowski.githubuserrepos.payload.ConsumerResponse;
-import pl.konradchrzanowski.githubuserrepos.payload.GitHubReposApiResponse;
 import pl.konradchrzanowski.githubuserrepos.service.GitHubApiService;
 import pl.konradchrzanowski.githubuserrepos.service.dto.BranchDTO;
 import pl.konradchrzanowski.githubuserrepos.service.dto.GitHubRepoDTO;
+import pl.konradchrzanowski.githubuserrepos.service.dto.OwnerDTO;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,12 +75,28 @@ public class GitHubApiServiceImpl implements GitHubApiService {
     private List<GitHubRepoDTO> getListOfUserRepos(String userName) {
         final Object[] gitHubRepos = getUserRepos(userName);
         List<GitHubRepoDTO> repos = mapObjectsFromApi(gitHubRepos);
-        List<GitHubRepoDTO> mappedRepos = mapLoginFromOwner(repos);
-        return Objects.requireNonNullElse(repos, Collections.emptyList());
+        return mapLoginFromOwner(repos);
     }
 
     private List<GitHubRepoDTO> mapLoginFromOwner(List<GitHubRepoDTO> repos) {
-        return null;
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        List<GitHubRepoDTO> result = new ArrayList<>();
+        repos.forEach(gitHubRepoDTO -> {
+            String ownerJson = objectMapper.convertValue(gitHubRepoDTO.getOwner().toString(), String.class);
+            OwnerDTO ownerDTO = mapLoginFromOwnerJson(ownerJson);
+            result.add(gitHubRepoDTO.toBuilder().login(ownerDTO.getLogin()).build());
+        });
+        return result;
+    }
+
+    private OwnerDTO mapLoginFromOwnerJson(String ownerJson) {
+        OwnerDTO ownerDTO = null;
+        try {
+            ownerDTO = objectMapper.readValue(ownerJson, OwnerDTO.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return ownerDTO;
     }
 
     private List<GitHubRepoDTO> mapObjectsFromApi(Object[] gitHubRepos) {
