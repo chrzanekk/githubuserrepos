@@ -3,7 +3,9 @@ package pl.konradchrzanowski.githubuserrepos.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import pl.konradchrzanowski.githubuserrepos.payload.ConsumerResponse;
 
+import java.util.List;
+
 public interface ClientService {
 
-    ConsumerResponse getUserRepositories(String userName) ;
+    List<ConsumerResponse> getUserRepositories(String userName) ;
 }

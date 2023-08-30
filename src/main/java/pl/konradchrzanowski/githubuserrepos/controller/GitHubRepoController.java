@@ -10,6 +10,8 @@ import pl.konradchrzanowski.githubuserrepos.payload.ConsumerRequest;
 import pl.konradchrzanowski.githubuserrepos.payload.ConsumerResponse;
 import pl.konradchrzanowski.githubuserrepos.service.ClientService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/githubrepo/")
 public class GitHubRepoController {
@@ -22,8 +24,8 @@ public class GitHubRepoController {
 
 
     @GetMapping("/repositories")
-    public ResponseEntity<ConsumerResponse> getUserRepositories(@RequestBody ConsumerRequest request) {
-        ConsumerResponse response = clientService.getUserRepositories(request.getUsername());
+    public ResponseEntity<List<ConsumerResponse>> getUserRepositories(@RequestBody ConsumerRequest request) {
+        List<ConsumerResponse> response = clientService.getUserRepositories(request.getUsername());
         return ResponseEntity.ok(response);
     }
 }

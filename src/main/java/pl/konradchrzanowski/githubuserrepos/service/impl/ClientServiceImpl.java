@@ -5,6 +5,8 @@ import pl.konradchrzanowski.githubuserrepos.payload.ConsumerResponse;
 import pl.konradchrzanowski.githubuserrepos.service.ClientService;
 import pl.konradchrzanowski.githubuserrepos.service.GitHubApiService;
 
+import java.util.List;
+
 @Service
 public class ClientServiceImpl implements ClientService {
     private final GitHubApiService gitHubApiService;
@@ -14,7 +16,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ConsumerResponse getUserRepositories(String userName) {
+    public List<ConsumerResponse> getUserRepositories(String userName) {
         return gitHubApiService.getGithubRepo(userName);
     }
 }

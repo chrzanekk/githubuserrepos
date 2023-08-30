@@ -1,3 +1,7 @@
 github:
   api:
     baseUrl: "https://api.github.com/users"
+spring:
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
