@@ -30,9 +30,6 @@ public class GitHubApiServiceImpl implements GitHubApiService {
     private static final String REPOS = "/repos";
     private final ObjectMapper objectMapper;
 
-    @Value("${github.api.baseUrl}")
-    private String baseUrl;
-
     private final WebClient webClient;
 
     public GitHubApiServiceImpl(ObjectMapper objectMapper, WebClient webClient) {
@@ -172,7 +169,7 @@ public class GitHubApiServiceImpl implements GitHubApiService {
 
 
     private String uriCreatorForUserGitHubRepos(String userName) {
-        return baseUrl + "/" + userName + REPOS;
+        return "/" + userName + REPOS;
     }
 
     private Mono<Throwable> handleError(org.springframework.web.reactive.function.client.ClientResponse response) {

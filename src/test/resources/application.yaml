@@ -1,0 +1,7 @@
+github:
+  api:
+    baseUrl: ""
+spring:
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
