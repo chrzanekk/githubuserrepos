@@ -21,4 +21,4 @@ curl \
 http://localhost:8080/api/githubrepo/repositories
 
 We can improve this app by adding @Async to avoid waiting and dont block threads 
-Also test of webClient can be extended for more cases 
+Also test of webClient can be extended for more cases - this is just a sample 
