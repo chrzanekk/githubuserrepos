@@ -66,17 +66,17 @@ public class GitHubApiServiceTests {
                 .addHeader("Content-Type", "application/json");
         mockGitHubApi.enqueue(reposResponse);
         mockGitHubApi.enqueue(branchesResponse);
-        ConsumerRequest consumerRequest = ConsumerRequest.builder().username(ownerLogin).build();
+        ConsumerRequest consumerRequest = new ConsumerRequest(ownerLogin);
 
         //when
-        List<ConsumerResponse> responses = gitHubApiService.getGithubRepo(consumerRequest.getUsername());
+        List<ConsumerResponse> responses = gitHubApiService.getGithubRepo(consumerRequest.username());
 
         //then
         ConsumerResponse response = responses.get(0);
-        assertThat(response.getName()).isEqualTo("BoardGames");
-        assertThat(response.getOwnerLogin()).isEqualTo(ownerLogin);
-        assertThat(response.getBranches()).hasSize(1);
-        List<BranchDTO> branchDTOList = response.getBranches();
+        assertThat(response.name()).isEqualTo("BoardGames");
+        assertThat(response.ownerLogin()).isEqualTo(ownerLogin);
+        assertThat(response.branches()).hasSize(1);
+        List<BranchDTO> branchDTOList = response.branches();
         BranchDTO branchDTO = branchDTOList.get(0);
         assertThat(branchDTO.getName()).isEqualTo(branchName);
         assertThat(branchDTO.getCommitSha()).isEqualTo(sha);

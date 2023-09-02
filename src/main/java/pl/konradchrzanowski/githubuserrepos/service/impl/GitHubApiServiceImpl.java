@@ -51,10 +51,10 @@ public class GitHubApiServiceImpl implements GitHubApiService {
                                                             Map<String, List<BranchDTO>> branchDTOMap) {
         List<ConsumerResponse> result = new ArrayList<>();
         filteredReposDTOS.forEach(gitHubRepoDTO -> {
-            ConsumerResponse response = ConsumerResponse.builder()
-                    .name(gitHubRepoDTO.getName())
-                    .ownerLogin(gitHubRepoDTO.getLogin())
-                    .branches(mapBranchesForGivenRepo(gitHubRepoDTO.getName(), branchDTOMap)).build();
+            ConsumerResponse response = new ConsumerResponse(
+                    gitHubRepoDTO.getName(),
+                    gitHubRepoDTO.getLogin(),
+                    mapBranchesForGivenRepo(gitHubRepoDTO.getName(), branchDTOMap));
             result.add(response);
         });
         return result;
