@@ -25,7 +25,7 @@ public class GitHubRepoController {
 
     @GetMapping("/repositories")
     public ResponseEntity<List<ConsumerResponse>> getUserRepositories(@RequestBody ConsumerRequest request) {
-        List<ConsumerResponse> response = clientService.getUserRepositories(request.getUsername());
+        List<ConsumerResponse> response = clientService.getUserRepositories(request.username());
         return ResponseEntity.ok(response);
     }
 }

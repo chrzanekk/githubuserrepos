@@ -4,7 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.ResolvableType;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import pl.konradchrzanowski.githubuserrepos.service.dto.GitHubRepoDTO;
 import pl.konradchrzanowski.githubuserrepos.service.dto.OwnerDTO;
 import reactor.core.publisher.Mono;
 
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,12 +42,38 @@ public class GitHubApiServiceImpl implements GitHubApiService {
     @Override
     public List<ConsumerResponse> getGithubRepo(String username) {
         log.debug("Request to get list of github repositories of: {} ", username);
-        List<GitHubRepoDTO> listOfReposDTO = getListOfUserRepos(username);
+
+        List<GitHubRepoDTO> listOfReposDTO = getListOfReposFromGithub(username);
         List<GitHubRepoDTO> filteredReposDTOS = findNoForkRepos(listOfReposDTO);
         Map<String, List<BranchDTO>> branchDTOList = getMapOfUserRepoBranches(filteredReposDTOS);
         List<ConsumerResponse> prepareResponse = prepareResponseForClient(filteredReposDTOS, branchDTOList);
         return prepareResponse;
     }
+
+
+    private List<GitHubRepoDTO> getListOfReposFromGithub(String userName) {
+        return webClient.get()
+                .uri(uriCreatorForUserGitHubRepos(userName))
+                .accept(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, this::handleError)
+                .bodyToMono(new ParameterizedTypeReference<List<GitHubRepoDTO>>() {
+                })
+                .block();
+    }
+
+   // private List<BranchDTO> getBranches(String userName, String uri) {
+  //      return webClient.get()
+  //              .uri(uri)
+  //              .accept(MediaType.APPLICATION_JSON)
+  //              .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+  //              .retrieve()
+  //              .onStatus(HttpStatusCode::is4xxClientError, this::handleError)
+  //              .bodyToMono(new ParameterizedTypeReference<List<BranchDTO>>() {
+  //              })
+     //           );
+   // }
 
     private List<ConsumerResponse> prepareResponseForClient(List<GitHubRepoDTO> filteredReposDTOS,
                                                             Map<String, List<BranchDTO>> branchDTOMap) {
@@ -67,22 +95,6 @@ public class GitHubApiServiceImpl implements GitHubApiService {
                 .findFirst().orElse(Collections.emptyList());
     }
 
-    private List<GitHubRepoDTO> getListOfUserRepos(String userName) {
-        final Object[] gitHubRepos = getUserReposFromApi(userName);
-        List<GitHubRepoDTO> repos = mapObjectsFromApi(gitHubRepos);
-        return mapLoginFromOwner(repos);
-    }
-
-    private Object[] getUserReposFromApi(String userName) {
-        return webClient.get()
-                .uri(uriCreatorForUserGitHubRepos(userName))
-                .accept(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, this::handleError)
-                .bodyToMono(Object[].class)
-                .block();
-    }
 
     private List<GitHubRepoDTO> mapObjectsFromApi(Object[] gitHubRepos) {
         return Arrays.stream(gitHubRepos).map(object -> objectMapper.convertValue(object, GitHubRepoDTO.class))
