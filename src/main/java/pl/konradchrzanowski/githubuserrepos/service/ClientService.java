@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface ClientService {
 
-    List<ConsumerResponse> getUserRepositories(String userName) ;
+    List<ConsumerResponse> getUserRepositories(String userName) throws JsonProcessingException;
 }

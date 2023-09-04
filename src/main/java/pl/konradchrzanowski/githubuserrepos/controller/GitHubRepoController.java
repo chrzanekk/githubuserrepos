@@ -24,7 +24,7 @@ public class GitHubRepoController {
 
 
     @GetMapping("/repositories")
-    public ResponseEntity<List<ConsumerResponse>> getUserRepositories(@RequestBody ConsumerRequest request) {
+    public ResponseEntity<List<ConsumerResponse>> getUserRepositories(@RequestBody ConsumerRequest request) throws JsonProcessingException {
         List<ConsumerResponse> response = clientService.getUserRepositories(request.username());
         return ResponseEntity.ok(response);
     }

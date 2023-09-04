@@ -1,5 +1,6 @@
 package pl.konradchrzanowski.githubuserrepos.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.stereotype.Service;
 import pl.konradchrzanowski.githubuserrepos.payload.ConsumerResponse;
 import pl.konradchrzanowski.githubuserrepos.service.ClientService;
@@ -16,7 +17,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public List<ConsumerResponse> getUserRepositories(String userName) {
+    public List<ConsumerResponse> getUserRepositories(String userName) throws JsonProcessingException {
         return gitHubApiService.getGithubRepo(userName);
     }
 }

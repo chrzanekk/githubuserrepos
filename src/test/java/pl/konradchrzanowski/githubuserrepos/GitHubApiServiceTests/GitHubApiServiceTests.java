@@ -1,5 +1,6 @@
 package pl.konradchrzanowski.githubuserrepos.GitHubApiServiceTests;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
@@ -55,7 +56,7 @@ public class GitHubApiServiceTests {
     }
 
     @Test
-    public void getCorrectResponseWebClient() {
+    public void getCorrectResponseWebClient() throws JsonProcessingException {
         //given
         String ownerLogin = "chrzanekk";
         String branchName = "master";
